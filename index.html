@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en" spellcheck="false">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Window Calc">
+<title>Ankit Window Calc</title>
+
+<!-- ============================================================
+     🎨 COLORS — change these to update the whole app theme
+     ============================================================ -->
+<style>
+  :root {
+    --primary:   #6B7040;   /* olive green — buttons, headers    */
+    --secondary: #A89F6B;   /* tan — accents, underlines         */
+    --bg:        #F5F0E8;   /* cream — page background           */
+    --card:      #FDFCFA;   /* white — card background           */
+    --light:     #EDE8DC;   /* light beige — borders, row bg     */
+    --text:      #4A4D2A;   /* dark olive — main text            */
+    --gray:      #7A7A6A;   /* gray — secondary text             */
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);padding-bottom:40px}
+  [contenteditable=false],[class*="r-val"],[class*="g-val"],[class*="val"]{
+    -webkit-spell-check:none;spell-check:none;}
+
+  /* Header */
+  .header{background:var(--primary);padding:50px 16px 18px;text-align:center}
+  .header h1{color:#fff;font-size:22px;letter-spacing:1px}
+  .header p{color:#D4C9A8;font-size:12px;margin-top:4px}
+
+  /* Cards */
+  .card{background:var(--card);border-radius:16px;margin:14px;padding:18px;box-shadow:0 3px 12px rgba(0,0,0,0.08)}
+  .card-title{font-size:13px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1px;
+    padding-bottom:10px;border-bottom:2px solid var(--secondary);margin-bottom:14px}
+
+  /* Input */
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  label{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:5px}
+  input[type=number]{width:100%;padding:13px;border:2px solid var(--light);border-radius:10px;
+    font-size:24px;font-weight:700;color:var(--text);background:var(--bg);
+    outline:none;text-align:center;-webkit-appearance:none}
+  input[type=number]:focus{border-color:var(--primary)}
+
+  /* ST Grid */
+  .st-title{font-size:11px;font-weight:600;color:var(--primary);text-transform:uppercase;
+    letter-spacing:0.8px;margin-bottom:8px}
+  .st-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
+  .st-btn{padding:10px 2px;border:2px solid var(--light);border-radius:8px;background:var(--bg);
+    font-size:13px;font-weight:700;color:var(--text);cursor:pointer;text-align:center;transition:all 0.15s}
+  .st-btn.on{background:var(--secondary);border-color:var(--secondary);color:#fff}
+  .st-btn.on.zero{background:var(--primary);border-color:var(--primary)}
+  /* ST display box — same height as input */
+  .st-display{width:100%;padding:13px;border:2px solid var(--primary);border-radius:10px;
+    font-size:24px;font-weight:700;color:#fff;background:var(--primary);
+    text-align:center;}
+  .dim-line{height:1px;background:var(--light);margin:16px 0}
+
+  /* Buttons */
+  .calc-btn{width:100%;padding:15px;background:var(--primary);color:#fff;border:none;
+    border-radius:12px;font-size:17px;font-weight:700;letter-spacing:1px;
+    text-transform:uppercase;margin-top:14px;cursor:pointer}
+  .calc-btn:active{opacity:0.85}
+  .clear-btn{width:100%;padding:11px;background:transparent;color:var(--gray);
+    border:2px solid var(--light);border-radius:12px;font-size:14px;margin-top:8px;cursor:pointer}
+
+  /* Results */
+  .results{display:none}
+  .results.show{display:block}
+
+  /* Summary bar */
+  .summary{background:var(--primary);border-radius:14px;margin:0 14px 2px;
+    padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+  .summary .lbl{font-size:10px;color:#D4C9A8}
+  .summary .val{font-size:18px;font-weight:700;color:#fff}
+  .summary .sep{width:1px;height:36px;background:rgba(255,255,255,0.2)}
+
+  /* Result rows */
+  .r-row{display:flex;justify-content:space-between;align-items:center;
+    padding:12px 0;border-bottom:1px solid var(--light)}
+  .r-row:last-child{border-bottom:none}
+  .r-name{font-size:14px;font-weight:500}
+  .r-formula{font-size:11px;color:var(--gray);margin-top:2px}
+  .r-right{display:flex;align-items:center;gap:8px}
+  .r-qty{background:var(--light);color:var(--primary);font-size:10px;
+    font-weight:700;padding:3px 7px;border-radius:20px}
+  .r-val{font-size:15px;font-weight:700;color:var(--primary);text-align:right;min-width:90px;
+    -webkit-user-select:none;user-select:none;spellcheck:false}
+  .g-val{font-size:16px;font-weight:700;color:var(--text);
+    -webkit-user-select:none;user-select:none}
+  .summary .val{font-size:18px;font-weight:700;color:#fff;
+    -webkit-user-select:none;user-select:none}
+  .glass-box{background:var(--light);border-radius:12px;padding:14px}
+  .glass-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .g-item{background:var(--card);border-radius:10px;padding:12px;text-align:center}
+  .g-lbl{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px}
+  .g-val{font-size:16px;font-weight:700;color:var(--text)}
+  .g-note{font-size:10px;color:var(--gray);text-align:center;margin-top:8px}
+
+  /* Panel badge */
+  .badge{display:inline-block;background:var(--primary);color:#fff;
+    font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:10px}
+
+  /* Install tip */
+  .tip{margin:14px;background:var(--text);border-radius:12px;padding:12px 14px;
+    display:flex;gap:10px;align-items:flex-start}
+  .tip p{font-size:11px;color:#D4C9A8;line-height:1.6}
+  .tip strong{color:#fff}
+</style>
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<div class="header">
+  <h1>🪟 ANKIT WINDOW CALC</h1>
+  <p>2 Track Sliding Window — Profile Calculator</p>
+</div>
+
+<!-- ==================== INPUT ==================== -->
+<div class="card">
+  <div class="card-title">📐 Frame Size Input</div>
+
+  <!-- LENGTH -->
+  <div class="row">
+    <div>
+      <label>Length (inch)</label>
+      <input type="number" id="len-in" placeholder="0" inputmode="numeric" min="0">
+    </div>
+    <div>
+      <label>(1 ST = ⅛ INCH)</label>
+      <div class="st-display" id="len-st-show">0 st</div>
+    </div>
+  </div>
+  <div class="st-grid" id="len-grid"></div>
+
+  <div class="dim-line"></div>
+
+  <!-- HEIGHT -->
+  <div class="row">
+    <div>
+      <label>Height (inch)</label>
+      <input type="number" id="hgt-in" placeholder="0" inputmode="numeric" min="0">
+    </div>
+    <div>
+      <label>(1 ST = ⅛ INCH)</label>
+      <div class="st-display" id="hgt-st-show">0 st</div>
+    </div>
+  </div>
+  <div class="st-grid" id="hgt-grid"></div>
+
+  <button class="calc-btn" onclick="calculate()">⚙️ CALCULATE</button>
+  <button class="clear-btn" onclick="clearAll()">Clear</button>
+</div>
+
+<!-- ==================== RESULTS ==================== -->
+<div class="results" id="results">
+
+  <div class="summary">
+    <div><div class="lbl">Length</div><div class="val" id="s-len">—</div></div>
+    <div class="sep"></div>
+    <div><div class="lbl">Height</div><div class="val" id="s-hgt">—</div></div>
+    <div class="sep"></div>
+    <div><div class="lbl">Panels</div><div class="val">2</div></div>
+  </div>
+
+  <!-- FRAME -->
+  <div class="card">
+    <div class="card-title">🔩 Frame Profiles</div>
+    <div class="r-row">
+      <div><div class="r-name">2 Track Bottom</div><div class="r-formula">= Length</div></div>
+      <div class="r-right"><span class="r-qty">1 pc</span><div class="r-val" id="r-tb">—</div></div>
+    </div>
+    <div class="r-row">
+      <div><div class="r-name">2 Track Top</div><div class="r-formula">= Length</div></div>
+      <div class="r-right"><span class="r-qty">1 pc</span><div class="r-val" id="r-ttl">—</div></div>
+    </div>
+    <div class="r-row">
+      <div><div class="r-name">2 Track Top</div><div class="r-formula">= Height</div></div>
+      <div class="r-right"><span class="r-qty">2 pcs</span><div class="r-val" id="r-tth">—</div></div>
+    </div>
+  </div>
+
+  <!-- PANEL -->
+  <div class="card">
+    <div class="card-title">🪟 Panel Profiles</div>
+    <div class="badge">× 2 Panels — same size</div>
+    <div class="r-row">
+      <div><div class="r-name">Top & Bottom</div><div class="r-formula">= (Length − 6"2) ÷ 2</div></div>
+      <div class="r-right"><span class="r-qty">2 pcs each</span><div class="r-val" id="r-tb2">—</div></div>
+    </div>
+    <div class="r-row">
+      <div><div class="r-name">Handle</div><div class="r-formula">= Height − 1"4</div></div>
+      <div class="r-right"><span class="r-qty">1 pc each</span><div class="r-val" id="r-handle">—</div></div>
+    </div>
+    <div class="r-row">
+      <div><div class="r-name">Interlock</div><div class="r-formula">= Height − 1"4</div></div>
+      <div class="r-right"><span class="r-qty">1 pc each</span><div class="r-val" id="r-intlk">—</div></div>
+    </div>
+  </div>
+
+  <!-- GLASS -->
+  <div class="card">
+    <div class="card-title">🔲 Glass Size</div>
+    <div class="glass-box">
+      <div style="font-size:11px;color:var(--gray)">Per Panel × 2</div>
+      <div class="glass-grid">
+        <div class="g-item">
+          <div class="g-lbl">Vertical</div>
+          <div class="g-val" id="r-gv">—</div>
+          <div style="font-size:10px;color:var(--gray);margin-top:3px">Handle − 2"4</div>
+        </div>
+        <div class="g-item">
+          <div class="g-lbl">Horizontal</div>
+          <div class="g-val" id="r-gh">—</div>
+          <div style="font-size:10px;color:var(--gray);margin-top:3px">Top/Bot + 0"4</div>
+        </div>
+      </div>
+      <div class="g-note">2 glass pieces per window</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Install tip -->
+<div class="tip">
+  <div style="font-size:20px">📱</div>
+  <p><strong>Save as iPhone App:</strong> Open in Safari → tap Share → <strong>Add to Home Screen</strong></p>
+</div>
+
+<!-- ============================================================
+     ⚙️  JAVASCRIPT — Edit formulas here
+     
+     ST SCALE:  1 st = 1/8 inch = 0.125"
+     CONSTANTS (in decimal inches):
+       C_1i4 = 1"4  = 1 + 4/8 = 1.5"
+       C_6i2 = 6"2  = 6 + 2/8 = 6.25"
+       C_2i4 = 2"4  = 2 + 4/8 = 2.5"
+       C_0i4 = 0"4  = 0 + 4/8 = 0.5"
+     ============================================================ -->
+<script>
+
+// ── CONSTANTS (easy to change) ──────────────────────────────
+const ST_PER_INCH = 8;          // 1 inch = 8 st
+
+const C_HANDLE    = 1 + 4/8;   // 1"4  → Handle & Interlock deduction
+const C_TOPBOT    = 6 + 2/8;   // 6"2  → Top/Bottom deduction
+const C_GLASS_V   = 2 + 4/8;   // 2"4  → Glass vertical deduction
+const C_GLASS_H   = 0 + 4/8;   // 0"4  → Glass horizontal addition
+// ────────────────────────────────────────────────────────────
+
+// ST button values and their display labels
+const ST_VALS = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8];
+const ST_LBLS = ['0','½','1','1½','2','2½','3','3½','4','4½','5','5½','6','6½','7','7½','8'];
+
+let sel = { len: 0, hgt: 0 };
+
+function buildGrid(dim) {
+  const g = document.getElementById(`${dim}-grid`);
+  g.innerHTML = '';
+  ST_VALS.forEach((v, i) => {
+    const b = document.createElement('div');
+    b.className = 'st-btn' + (v===0?' zero':'') + (sel[dim]===v?' on':'');
+    b.innerHTML = ST_LBLS[i];
+    b.onclick = () => { sel[dim] = v; updateShow(dim); buildGrid(dim); };
+    g.appendChild(b);
+  });
+}
+
+function updateShow(dim) {
+  const i = ST_VALS.indexOf(sel[dim]);
+  document.getElementById(`${dim}-st-show`).textContent = ST_LBLS[i] + ' st';
+}
+
+// Convert decimal inches → display string e.g. 36"4½
+const ST_FRAC = {
+  0:'', 0.5:'½', 1:'1', 1.5:'1½', 2:'2', 2.5:'2½',
+  3:'3', 3.5:'3½', 4:'4', 4.5:'4½', 5:'5', 5.5:'5½',
+  6:'6', 6.5:'6½', 7:'7', 7.5:'7½', 8:''
+};
+function fmt(dec) {
+  const r  = Math.round(dec * 16) / 16;
+  let inch = Math.floor(r);
+  let st   = Math.round((r - inch) * ST_PER_INCH * 10) / 10;
+  if (st >= ST_PER_INCH) { inch++; st = 0; }
+  const stStr = ST_FRAC[st] !== undefined ? ST_FRAC[st] : st.toString();
+  return stStr ? `${inch}" ${stStr}` : `${inch}"`;
+}
+
+function setR(id, val) {
+  document.getElementById(id).textContent = fmt(val);
+}
+
+// ── MAIN CALCULATE ───────────────────────────────────────────
+function calculate() {
+  const L = (parseFloat(document.getElementById('len-in').value) || 0) + sel.len / ST_PER_INCH;
+  const H = (parseFloat(document.getElementById('hgt-in').value) || 0) + sel.hgt / ST_PER_INCH;
+
+  if (L <= 0 || H <= 0) { alert('Please enter Length and Height.'); return; }
+  if (L <= C_TOPBOT)    { alert('Length must be greater than 6"2.'); return; }
+
+  // ── FORMULAS (edit here if needed) ──
+  const trackBottom = L;
+  const trackTopL   = L;
+  const trackTopH   = H;
+  const topBottom   = (L - C_TOPBOT) / 2;
+  const handle      = H - C_HANDLE;
+  const interlock   = H - C_HANDLE;
+  const glassV      = handle - C_GLASS_V;      // Handle - 2"4
+  const glassH      = topBottom + C_GLASS_H;   // TopBottom + 0"4
+  // ────────────────────────────────────
+
+  document.getElementById('s-len').textContent = fmt(L);
+  document.getElementById('s-hgt').textContent = fmt(H);
+  setR('r-tb',     trackBottom);
+  setR('r-ttl',    trackTopL);
+  setR('r-tth',    trackTopH);
+  setR('r-tb2',    topBottom);
+  setR('r-handle', handle);
+  setR('r-intlk',  interlock);
+  setR('r-gv',     glassV);
+  setR('r-gh',     glassH);
+
+  const res = document.getElementById('results');
+  res.classList.add('show');
+  setTimeout(() => res.scrollIntoView({ behavior:'smooth', block:'start' }), 100);
+}
+
+function clearAll() {
+  document.getElementById('len-in').value = '';
+  document.getElementById('hgt-in').value = '';
+  sel = { len: 0, hgt: 0 };
+  ['len','hgt'].forEach(d => { updateShow(d); buildGrid(d); });
+  document.getElementById('results').classList.remove('show');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// Init
+buildGrid('len');
+buildGrid('hgt');
+</script>
+</body>
+</html>
